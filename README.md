@@ -1,6 +1,15 @@
-# 🎯 Empusa: Mission Control for Autonomous Agents
-
-**Stop burning API credits on zombie loops. Visualize, Debug, and Resume your AI agents in real-time.**
+<div align="center">
+  <img src="./public/logo.png" alt="Empusa Logo" width="120" height="120" />
+  
+  # 🎯 Empusa: Mission Control for Autonomous Agents
+  
+  **Stop burning API credits on zombie loops. Visualize, Debug, and Resume your AI agents in real-time.**
+  
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+  
+</div>
 
 ---
 
@@ -20,11 +29,13 @@ You've built an autonomous agent. It works... until it doesn't.
 ## 📸 Screenshots
 
 ### Mission Control Dashboard
-![Mission Control Dashboard](./public/dashboard-preview.png)
+<img src="./public/dashboard-preview.png" alt="Mission Control Dashboard" />
+
 *Real-time overview of all running agents with status indicators and intervention counts*
 
 ### Time Travel Debugger
-![Time Travel Debugger](./public/trace-view.png)
+<img src="./public/trace-view.png" alt="Time Travel Debugger" />
+
 *Step-by-step execution timeline with success/failure states and loop detection*
 
 ---
@@ -57,8 +68,8 @@ This tool was born from fixing the **critical Infinite Loop bug in OpenClaw** (P
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/empusa-dashboard.git
-cd empusa-dashboard
+git clone https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI.git
+cd EmpusaAI
 
 # Install dependencies
 npm install
@@ -73,10 +84,16 @@ Open [http://localhost:3000](http://localhost:3000) to see the dashboard.
 
 ## 🛠️ Tech Stack
 
-- **Next.js 14** (App Router) - React framework for production
-- **Tailwind CSS** - Utility-first styling
-- **Lucide Icons** - Beautiful, consistent iconography
-- **TypeScript** - Type-safe development
+<div align="center">
+
+| Technology | Purpose |
+|------------|---------|
+| **Next.js 14** | React framework with App Router |
+| **TypeScript** | Type-safe development |
+| **Tailwind CSS** | Utility-first styling |
+| **Lucide Icons** | Beautiful, consistent iconography |
+
+</div>
 
 ---
 
@@ -108,7 +125,31 @@ Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+```
+MIT License
+
+Copyright (c) 2026 EmpusaAI
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+See [LICENSE](LICENSE) file for full details.
 
 ---
 
@@ -118,4 +159,10 @@ Built by developers who got tired of debugging agents in production. Special tha
 
 ---
 
-**⭐ If this saves you from one 2 AM debugging session, give us a star!**
+<div align="center">
+  
+  **⭐ If this saves you from one 2 AM debugging session, give us a star!**
+  
+  [Report Bug](https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI/issues) · [Request Feature](https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI/issues) · [Documentation](https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI/wiki)
+  
+</div>
