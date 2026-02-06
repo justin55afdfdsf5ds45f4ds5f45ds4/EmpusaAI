@@ -3,7 +3,7 @@
   
   # 🎯 Empusa: Mission Control for Autonomous Agents
   
-  **Stop burning API credits on zombie loops. Visualize, Debug, and Resume your AI agents in real-time.**
+  **⚡ Real-Time Intervention. Watch Empusa catch loops as they happen.**
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
