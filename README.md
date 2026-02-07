@@ -80,6 +80,69 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the dashboard.
 
+### Testing with Sample Data
+
+Run the test script to send sample logs to the dashboard:
+
+```bash
+node scripts/test-ingest.js
+```
+
+This will create a test session with 5 log entries including a loop detection. The script will output a URL to view the session.
+
+---
+
+## 📡 API Reference
+
+### POST `/api/logs`
+
+Ingest agent execution logs in real-time.
+
+**Request Body:**
+```json
+{
+  "sessionId": "session-123",
+  "step": 1,
+  "action": "Click(Login)",
+  "status": "success",
+  "error": "Optional error message",
+  "timestamp": "2026-02-06T10:42:01.000Z"
+}
+```
+
+**Status Values:**
+- `success` - Step completed successfully
+- `failure` - Step failed with error
+- `loop_detected` - System detected infinite loop
+
+**Response:**
+```json
+{
+  "success": true,
+  "id": 1
+}
+```
+
+### GET `/api/logs?sessionId={id}`
+
+Retrieve all logs for a specific session.
+
+**Response:**
+```json
+{
+  "logs": [
+    {
+      "id": 1,
+      "session_id": "session-123",
+      "step": 1,
+      "action": "Click(Login)",
+      "status": "success",
+      "timestamp": "2026-02-06T10:42:01.000Z"
+    }
+  ]
+}
+```
+
 ---
 
 ## 🛠️ Tech Stack
