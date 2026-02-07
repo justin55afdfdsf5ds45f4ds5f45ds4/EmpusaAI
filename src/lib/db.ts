@@ -18,9 +18,17 @@ export function getDatabase() {
         status TEXT NOT NULL,
         error TEXT,
         timestamp TEXT NOT NULL,
+        state_snapshot TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    // Add state_snapshot column if it doesn't exist (for existing databases)
+    try {
+      db.exec(`ALTER TABLE logs ADD COLUMN state_snapshot TEXT`);
+    } catch (e) {
+      // Column already exists, ignore error
+    }
     
     // Create index for faster queries
     db.exec(`
@@ -39,6 +47,7 @@ export interface LogEntry {
   status: 'success' | 'failure' | 'loop_detected';
   error?: string;
   timestamp: string;
+  state_snapshot?: string;
   created_at: string;
 }
 
@@ -48,12 +57,13 @@ export function insertLog(
   action: string,
   status: string,
   error?: string,
-  timestamp?: string
+  timestamp?: string,
+  stateSnapshot?: any
 ) {
   const db = getDatabase();
   const stmt = db.prepare(`
-    INSERT INTO logs (session_id, step, action, status, error, timestamp)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO logs (session_id, step, action, status, error, timestamp, state_snapshot)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
   
   const result = stmt.run(
@@ -62,7 +72,8 @@ export function insertLog(
     action,
     status,
     error || null,
-    timestamp || new Date().toISOString()
+    timestamp || new Date().toISOString(),
+    stateSnapshot ? JSON.stringify(stateSnapshot) : null
   );
   
   return result.lastInsertRowid;

@@ -8,21 +8,40 @@ const testLogs = [
     step: 1,
     action: 'GoToUrl("https://example.com/login")',
     status: 'success',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    state: {
+      currentUrl: 'https://example.com/login',
+      cookies: [],
+      retries: 0,
+      memory: { lastAction: 'navigate' }
+    }
   },
   {
     sessionId: SESSION_ID,
     step: 2,
     action: 'Click("Login Button")',
     status: 'success',
-    timestamp: new Date(Date.now() + 1000).toISOString()
+    timestamp: new Date(Date.now() + 1000).toISOString(),
+    state: {
+      currentUrl: 'https://example.com/login',
+      cookies: ['session=abc123'],
+      retries: 0,
+      memory: { lastAction: 'click', element: 'Login Button' }
+    }
   },
   {
     sessionId: SESSION_ID,
     step: 3,
     action: 'Type("username", "admin")',
     status: 'success',
-    timestamp: new Date(Date.now() + 2000).toISOString()
+    timestamp: new Date(Date.now() + 2000).toISOString(),
+    state: {
+      currentUrl: 'https://example.com/login',
+      cookies: ['session=abc123'],
+      retries: 0,
+      formData: { username: 'admin' },
+      memory: { lastAction: 'type', field: 'username' }
+    }
   },
   {
     sessionId: SESSION_ID,
@@ -30,7 +49,14 @@ const testLogs = [
     action: 'Click("Submit")',
     status: 'failure',
     error: 'Element not interactive',
-    timestamp: new Date(Date.now() + 3000).toISOString()
+    timestamp: new Date(Date.now() + 3000).toISOString(),
+    state: {
+      currentUrl: 'https://example.com/login',
+      cookies: ['session=abc123'],
+      retries: 1,
+      formData: { username: 'admin' },
+      memory: { lastAction: 'click_failed', element: 'Submit', error: 'Element not interactive' }
+    }
   },
   {
     sessionId: SESSION_ID,
@@ -38,7 +64,19 @@ const testLogs = [
     action: 'Click("Submit")',
     status: 'loop_detected',
     error: 'SYSTEM INTERVENTION: Loop Blocked',
-    timestamp: new Date(Date.now() + 4000).toISOString()
+    timestamp: new Date(Date.now() + 4000).toISOString(),
+    state: {
+      currentUrl: 'https://example.com/login',
+      cookies: ['session=abc123'],
+      retries: 2,
+      formData: { username: 'admin' },
+      memory: { 
+        lastAction: 'loop_detected', 
+        element: 'Submit', 
+        loopCount: 3,
+        suggestion: 'Try alternative selector or wait for element to be interactive'
+      }
+    }
   }
 ];
 

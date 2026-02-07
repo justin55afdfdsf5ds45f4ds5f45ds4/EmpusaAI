@@ -18,7 +18,11 @@ curl -X POST http://localhost:3000/api/logs \
     "sessionId": "my-agent-session",
     "step": 1,
     "action": "Click(LoginButton)",
-    "status": "success"
+    "status": "success",
+    "state": {
+      "currentUrl": "https://example.com",
+      "retries": 0
+    }
   }'
 ```
 
@@ -31,6 +35,7 @@ curl -X POST http://localhost:3000/api/logs \
   status: string;       // "success" | "failure" | "loop_detected"
   error?: string;       // Optional error message (for failures)
   timestamp?: string;   // Optional ISO timestamp (defaults to now)
+  state?: object;       // Optional state snapshot for time-travel resume
 }
 ```
 
@@ -168,3 +173,49 @@ Empusa uses SQLite for local storage. The database file (`empusa.db`) is created
 ## Real-Time Updates
 
 The dashboard polls the API every 2 seconds for new logs. For production use, consider implementing WebSocket connections for true real-time updates.
+
+## Time Travel Resume
+
+Empusa supports "Time Travel" debugging by capturing agent state snapshots with each log entry. This allows you to:
+
+1. **View State**: Click "View State" on any checkpoint to see the full agent memory dump
+2. **Copy Resume Config**: Click "Copy Resume Config" to copy the state JSON to clipboard
+3. **Resume Agent**: Paste the state back into your agent to restart from that exact point
+
+### State Snapshot Example
+
+```json
+{
+  "currentUrl": "https://example.com/login",
+  "cookies": ["session=abc123"],
+  "retries": 2,
+  "formData": { "username": "admin" },
+  "memory": {
+    "lastAction": "click_failed",
+    "element": "Submit",
+    "error": "Element not interactive"
+  }
+}
+```
+
+### Integration Example
+
+```python
+# Save state with each log
+current_state = {
+    "currentUrl": browser.current_url,
+    "cookies": browser.get_cookies(),
+    "retries": retry_count,
+    "memory": agent_memory
+}
+
+log_step(step, action, status, error, state=current_state)
+
+# Resume from saved state
+def resume_from_state(state):
+    browser.get(state["currentUrl"])
+    for cookie in state["cookies"]:
+        browser.add_cookie(cookie)
+    retry_count = state["retries"]
+    agent_memory = state["memory"]
+```

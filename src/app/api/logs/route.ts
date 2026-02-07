@@ -4,7 +4,7 @@ import { insertLog, getLogsBySession } from '@/lib/db';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, step, action, status, error, timestamp } = body;
+    const { sessionId, step, action, status, error, timestamp, state } = body;
     
     // Validate required fields
     if (!sessionId || step === undefined || !action || !status) {
@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Insert log entry
-    const id = insertLog(sessionId, step, action, status, error, timestamp);
+    // Insert log entry with state snapshot
+    const id = insertLog(sessionId, step, action, status, error, timestamp, state);
     
     return NextResponse.json(
       { success: true, id },

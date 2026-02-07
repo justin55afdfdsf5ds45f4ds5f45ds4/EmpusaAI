@@ -10,12 +10,15 @@ interface Checkpoint {
   status: 'success' | 'failure' | 'loop_detected';
   error?: string;
   timestamp: string;
+  state?: any;
 }
 
 export default function AgentDetail() {
   const params = useParams();
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedState, setExpandedState] = useState<number | null>(null);
+  const [copiedStep, setCopiedStep] = useState<number | null>(null);
   
   useEffect(() => {
     const fetchLogs = async () => {
@@ -34,7 +37,8 @@ export default function AgentDetail() {
               hour: '2-digit',
               minute: '2-digit',
               second: '2-digit'
-            })
+            }),
+            state: log.state_snapshot ? JSON.parse(log.state_snapshot) : null
           }));
           setCheckpoints(formattedLogs);
         }
@@ -55,6 +59,20 @@ export default function AgentDetail() {
   }, [params?.id]);
   
   const hasLoopDetected = checkpoints.some(cp => cp.status === 'loop_detected');
+  
+  const copyStateToClipboard = async (state: any, step: number) => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(state, null, 2));
+      setCopiedStep(step);
+      setTimeout(() => setCopiedStep(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+  
+  const toggleStateView = (step: number) => {
+    setExpandedState(expandedState === step ? null : step);
+  };
   
   if (loading) {
     return (
@@ -128,6 +146,31 @@ export default function AgentDetail() {
                     <p className={`text-xs font-mono ${cp.status === 'loop_detected' ? 'text-yellow-200' : 'text-red-300'}`}>
                       {cp.error}
                     </p>
+                  </div>
+                )}
+                {cp.state && (
+                  <div className="mt-3">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => toggleStateView(cp.step)}
+                        className="text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-3 py-1.5 rounded border border-neutral-700 transition-colors"
+                      >
+                        {expandedState === cp.step ? '🔽 Hide State' : '🔍 View State'}
+                      </button>
+                      <button
+                        onClick={() => copyStateToClipboard(cp.state, cp.step)}
+                        className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1"
+                      >
+                        {copiedStep === cp.step ? '✓ Copied!' : '📋 Copy Resume Config'}
+                      </button>
+                    </div>
+                    {expandedState === cp.step && (
+                      <div className="mt-2 bg-black/70 p-3 rounded border border-neutral-700 overflow-x-auto">
+                        <pre className="text-xs text-green-400 font-mono">
+                          {JSON.stringify(cp.state, null, 2)}
+                        </pre>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
