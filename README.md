@@ -90,6 +90,22 @@ node scripts/test-ingest.js
 
 This will create a test session with 5 log entries including a loop detection. The script will output a URL to view the session.
 
+### Live Agent Simulation
+
+Watch a real-time agent simulation with dynamic state evolution:
+
+```bash
+node scripts/simulation-agent.js
+```
+
+This runs a live "Flaky Browser Agent" that:
+- ✅ Navigates and clicks successfully
+- 🔄 Retries a failing action 3 times
+- 🚨 Detects the loop and halts automatically
+- 💾 Updates state in real-time (watch retries increment: 0 → 1 → 2 → 3)
+
+**Open the dashboard while it runs to see logs appear live!**
+
 ---
 
 ## 📡 API Reference
