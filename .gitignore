@@ -44,3 +44,6 @@ next-env.d.ts
 empusa.db
 empusa.db-shm
 empusa.db-wal
+
+# resume state (local testing)
+resume.json

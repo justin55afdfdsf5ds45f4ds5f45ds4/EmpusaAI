@@ -103,6 +103,37 @@ The agent **actually detects** the loop condition and makes a decision to stop.
 node scripts/simulation-agent.js
 ```
 
+### Time Travel Resume Mode
+
+Test the resume capability:
+
+```bash
+# Copy the example resume file
+cp resume.example.json resume.json
+
+# Run the simulation
+node scripts/simulation-agent.js
+```
+
+**What happens:**
+1. Script detects `resume.json` exists
+2. Loads the saved state (lastStep: 2)
+3. Skips Steps 1 & 2 (already completed)
+4. Resumes from Step 3 onwards
+5. Continues with the same state (cookies, URL, etc.)
+
+**Output:**
+```
+♻️  RESUME FOUND! Hydrating agent memory...
+📦 Loaded state: { "lastStep": 2, "retries": 0, ... }
+⏭️  Last completed step: 2
+
+⏩ Skipping Step 1: Navigate (Already Done)
+⏩ Skipping Step 2: Click Login (Already Done)
+⏳ Step 3: Typing username...
+🔄 Resuming from Step 4...
+```
+
 ### Watch Live
 
 1. Start the Next.js dev server: `npm run dev`
@@ -262,6 +293,48 @@ if (Math.random() < 0.3) {
 ```
 
 ## Technical Details
+
+### Time Travel Resume Implementation
+
+The simulation checks for a `resume.json` file on startup:
+
+```javascript
+function loadResumeState() {
+  if (fs.existsSync(RESUME_FILE)) {
+    const resumeData = fs.readFileSync(RESUME_FILE, 'utf8');
+    const loadedState = JSON.parse(resumeData);
+    console.log('♻️  RESUME FOUND! Hydrating agent memory...');
+    return loadedState;
+  }
+  return null;
+}
+```
+
+**Skip Logic:**
+```javascript
+// Step 1: Navigate
+if (state.lastStep >= 1) {
+  console.log('⏩ Skipping Step 1: Navigate (Already Done)');
+} else {
+  // Execute step 1
+  state.lastStep = 1;
+  await logToEmpusa(...);
+}
+```
+
+**Resume File Format:**
+```json
+{
+  "url": "https://example.com/login",
+  "retries": 0,
+  "lastStep": 2,
+  "memory": { "lastAction": "click" },
+  "cookies": [{ "name": "session", "value": "abc123" }],
+  "formData": {}
+}
+```
+
+The `lastStep` field determines which steps to skip. If `lastStep: 2`, the agent skips steps 1 and 2, resuming from step 3.
 
 ### State Deep Cloning
 

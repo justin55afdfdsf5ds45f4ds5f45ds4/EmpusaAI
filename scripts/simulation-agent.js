@@ -1,17 +1,23 @@
-// Live Agent Simulation - Demonstrates real-time loop detection
+// Live Agent Simulation - Demonstrates real-time loop detection with Time Travel Resume
+const fs = require('fs');
+const path = require('path');
+
 const API_URL = 'http://localhost:3000/api/logs';
 const SESSION_ID = 'live-sim-' + Date.now();
+const RESUME_FILE = path.join(__dirname, '..', 'resume.json');
 
 // Agent state (mutates as the simulation runs)
-const state = {
+let state = {
   url: 'google.com',
   retries: 0,
+  lastStep: 0,
   memory: {},
   cookies: [],
   formData: {}
 };
 
 let currentStep = 0;
+let resumeMode = false;
 
 // Helper: Log to Empusa with current state
 async function logToEmpusa(action, status, error = null) {
@@ -45,6 +51,28 @@ async function logToEmpusa(action, status, error = null) {
   }
 }
 
+// Helper: Load resume state if available
+function loadResumeState() {
+  if (fs.existsSync(RESUME_FILE)) {
+    try {
+      const resumeData = fs.readFileSync(RESUME_FILE, 'utf8');
+      const loadedState = JSON.parse(resumeData);
+      
+      console.log('♻️  RESUME FOUND! Hydrating agent memory...');
+      console.log(`📦 Loaded state:`, JSON.stringify(loadedState, null, 2));
+      console.log(`⏭️  Last completed step: ${loadedState.lastStep}\n`);
+      
+      resumeMode = true;
+      return loadedState;
+    } catch (err) {
+      console.error('❌ Failed to load resume.json:', err.message);
+      console.log('🔄 Starting fresh...\n');
+      return null;
+    }
+  }
+  return null;
+}
+
 // Helper: Wait for specified milliseconds
 function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -56,36 +84,64 @@ async function main() {
   console.log(`📝 Session ID: ${SESSION_ID}`);
   console.log(`🔗 Watch live: http://localhost:3000/agent/${SESSION_ID}\n`);
   
+  // Check for resume state
+  const resumeState = loadResumeState();
+  if (resumeState) {
+    state = { ...state, ...resumeState };
+    currentStep = state.lastStep;
+  }
+  
   // Step 1: Navigate to login page
-  console.log('⏳ Step 1: Navigating...');
-  state.url = 'https://example.com/login';
-  state.memory.lastAction = 'navigate';
-  await logToEmpusa('GoToUrl("https://example.com/login")', 'success');
-  await wait(1000);
+  if (state.lastStep >= 1) {
+    console.log('⏩ Skipping Step 1: Navigate (Already Done)');
+  } else {
+    console.log('⏳ Step 1: Navigating...');
+    state.url = 'https://example.com/login';
+    state.memory.lastAction = 'navigate';
+    state.lastStep = 1;
+    await logToEmpusa('GoToUrl("https://example.com/login")', 'success');
+    await wait(1000);
+  }
   
   // Step 2: Click login button
-  console.log('⏳ Step 2: Clicking login button...');
-  state.cookies.push({ name: 'session', value: 'abc123' });
-  state.memory.lastAction = 'click';
-  state.memory.element = 'Login Button';
-  await logToEmpusa('Click("Login Button")', 'success');
-  await wait(1000);
+  if (state.lastStep >= 2) {
+    console.log('⏩ Skipping Step 2: Click Login (Already Done)');
+  } else {
+    console.log('⏳ Step 2: Clicking login button...');
+    state.cookies.push({ name: 'session', value: 'abc123' });
+    state.memory.lastAction = 'click';
+    state.memory.element = 'Login Button';
+    state.lastStep = 2;
+    await logToEmpusa('Click("Login Button")', 'success');
+    await wait(1000);
+  }
   
   // Step 3: Fill username
-  console.log('⏳ Step 3: Typing username...');
-  state.formData.username = 'admin';
-  state.memory.lastAction = 'type';
-  state.memory.field = 'username';
-  await logToEmpusa('Type("username", "admin")', 'success');
-  await wait(1000);
+  if (state.lastStep >= 3) {
+    console.log('⏩ Skipping Step 3: Type Username (Already Done)');
+  } else {
+    console.log('⏳ Step 3: Typing username...');
+    state.formData.username = 'admin';
+    state.memory.lastAction = 'type';
+    state.memory.field = 'username';
+    state.lastStep = 3;
+    await logToEmpusa('Type("username", "admin")', 'success');
+    await wait(1000);
+  }
   
   // Step 4-6: THE TRAP - Flaky submit button (will retry and fail)
+  if (resumeMode) {
+    console.log(`\n🔄 Resuming from Step ${state.lastStep + 1}...`);
+    console.log(`💾 Current retry count: ${state.retries}\n`);
+  }
+  
   console.log('⏳ Step 4+: Attempting to submit form...');
   console.log('   💥 Simulating flaky element...\n');
   
   // Enter the retry loop
   while (true) {
     state.retries++;
+    state.lastStep = 3 + state.retries; // Track step progression
     state.memory.lastAction = 'click_attempt';
     state.memory.element = 'Submit';
     state.memory.retryCount = state.retries;
@@ -122,6 +178,10 @@ async function main() {
   console.log(`📊 View full trace: http://localhost:3000/agent/${SESSION_ID}`);
   console.log(`💾 Final state retries: ${state.retries}`);
   console.log(`\n💡 Try clicking "View State" on any step to see the live state evolution!`);
+  
+  if (resumeMode) {
+    console.log(`\n♻️  This run used Time Travel Resume from step ${resumeState.lastStep}`);
+  }
 }
 
 // Run the simulation

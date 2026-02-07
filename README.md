@@ -106,6 +106,25 @@ This runs a live "Flaky Browser Agent" that:
 
 **Open the dashboard while it runs to see logs appear live!**
 
+### Time Travel Resume
+
+Test the resume capability:
+
+```bash
+# Copy the example resume file
+cp resume.example.json resume.json
+
+# Run the simulation - it will skip completed steps!
+node scripts/simulation-agent.js
+```
+
+The agent will:
+- ♻️ Load state from `resume.json`
+- ⏩ Skip Steps 1 & 2 (already completed)
+- 🔄 Resume from Step 3 onwards
+
+**This proves you can restore agent state and continue execution!**
+
 ---
 
 ## 📡 API Reference
