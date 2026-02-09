@@ -29,13 +29,15 @@ curl -X POST http://localhost:3000/api/logs \
 **Request Body Schema:**
 ```typescript
 {
-  sessionId: string;    // Unique identifier for the agent session
-  step: number;         // Sequential step number
-  action: string;       // Description of the action taken
-  status: string;       // "success" | "failure" | "loop_detected"
-  error?: string;       // Optional error message (for failures)
-  timestamp?: string;   // Optional ISO timestamp (defaults to now)
-  state?: object;       // Optional state snapshot for time-travel resume
+  sessionId: string;       // Unique identifier for the agent session
+  step: number;            // Sequential step number
+  action: string;          // Description of the action taken
+  status: string;          // "success" | "failure" | "loop_detected"
+  error?: string;          // Optional error message (for failures)
+  errorCode?: string;      // Optional error code (e.g., "500", "404")
+  remedyAttempted?: string; // Optional remedy strategy (e.g., "retry_with_backoff")
+  timestamp?: string;      // Optional ISO timestamp (defaults to now)
+  state?: object;          // Optional state snapshot for time-travel resume
 }
 ```
 
@@ -155,6 +157,39 @@ await logStep(3, 'Submit form', 'failure', 'Element not found');
 - `success` - Action completed successfully
 - `failure` - Action failed with an error
 - `loop_detected` - System detected an infinite loop (triggers visual alert)
+
+## Remedy Tracking
+
+Empusa tracks attempted fixes (remedies) for failed actions. This enables intelligent loop detection that distinguishes between:
+- Same action with different remedies (not a loop yet)
+- Same action with same remedy repeated (loop detected!)
+
+### Remedy Chain Example
+
+```javascript
+// Attempt 1: Standard retry
+await logStep(4, 'Click("Submit")', 'failure', 'Element not interactive', '500', 'standard_retry');
+
+// Attempt 2: Retry with backoff
+await logStep(5, 'Click("Submit")', 'failure', 'Element not interactive', '500', 'retry_with_backoff');
+
+// Attempt 3: Change selector strategy
+await logStep(6, 'Click("Submit")', 'loop_detected', 'All remedies exhausted', '404', 'change_selector');
+```
+
+The dashboard displays a **Remedy Chain Analysis** card showing:
+- Each attempted remedy
+- Error codes for each attempt
+- Final outcome (Loop Detected)
+
+### Common Remedy Strategies
+
+- `standard_retry` - Simple retry without changes
+- `retry_with_backoff` - Wait before retrying (e.g., 5s delay)
+- `change_selector` - Try different element selector
+- `wait_for_element` - Add explicit wait conditions
+- `change_model` - Switch to different AI model
+- `manual_intervention` - Human review required
 
 ## Testing
 

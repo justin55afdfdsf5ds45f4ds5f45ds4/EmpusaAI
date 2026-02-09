@@ -143,6 +143,38 @@ export default function AgentDetail() {
         </div>
       ) : (
         <div className="max-w-3xl mx-auto mt-12 relative">
+          {/* Remedy Chain Summary - Only show if loop detected */}
+          {hasLoopDetected && remedyChain.length > 0 && (
+            <div className="mb-8 bg-gradient-to-br from-yellow-500/10 to-red-500/10 border border-yellow-500/30 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Shield size={20} className="text-yellow-400" />
+                <h2 className="text-lg font-bold text-white">Remedy Chain Analysis</h2>
+              </div>
+              <div className="space-y-2">
+                {remedyChain.map((attempt, idx) => (
+                  <div key={idx} className="flex items-center gap-3 text-sm">
+                    <span className="text-neutral-500 font-mono">Attempt {attempt.attemptNumber}:</span>
+                    <span className="text-blue-300 font-mono">{attempt.remedy}</span>
+                    {attempt.errorCode && (
+                      <span className="text-xs bg-red-900/30 text-red-300 px-2 py-0.5 rounded font-mono">
+                        {attempt.errorCode}
+                      </span>
+                    )}
+                    <span className={`text-xs font-bold ${
+                      attempt.outcome === 'Loop Detected' ? 'text-yellow-400' : 'text-red-400'
+                    }`}>
+                      ({attempt.outcome})
+                    </span>
+                  </div>
+                ))}
+                <div className="mt-4 pt-4 border-t border-yellow-500/20 flex items-center gap-2 text-sm">
+                  <AlertTriangle size={16} className="text-red-400" />
+                  <span className="text-red-300 font-bold">LOOP DETECTED - AGENT HALTED</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="absolute left-8 top-0 bottom-0 w-px bg-neutral-800" />
           <div className="space-y-8">
             {checkpoints.map((cp, idx) => (
