@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./public/logo.png" alt="Empusa" width="120" height="120" />
+
 # Empusa
 
 **Stop your scripts from burning money while you sleep.**
@@ -10,6 +12,8 @@ automatically detecting error loops and killing the requests before they cost yo
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+
+<video src="https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI/raw/main/public/demo.mp4" width="100%" autoplay muted loop></video>
 
 </div>
 
