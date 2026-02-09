@@ -1,266 +1,204 @@
 <div align="center">
-  <img src="./public/logo.png" alt="Empusa Logo" width="120" height="120" />
-  
-  # 🎯 Empusa: Mission Control for Autonomous Agents
-  
-  **⚡ Real-Time Intervention. Watch Empusa catch loops as they happen.**
-  
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
-  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
-  
+
+# Empusa
+
+**Stop your scripts from burning money while you sleep.**
+
+A local proxy that sits between your automation scripts and paid APIs,<br>
+automatically detecting error loops and killing the requests before they cost you.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+
 </div>
 
 ---
 
-## 🔥 The Problem
+## The Problem
 
-You've built an autonomous agent. It works... until it doesn't.
+You have a script that calls OpenAI, Replicate, Anthropic, or any paid API. It works great — until it doesn't.
 
-- **Infinite retry loops** drain your API budget while you sleep
-- **Hallucinated steps** cause agents to click the same button 47 times
-- **Timeout failures** leave you parsing 5,000 lines of JSON logs at 2 AM
-- **No visibility** into what went wrong or where the agent got stuck
+1. The script hits a runtime error (`Element not found`, `Network Timeout`, `500 Internal Server Error`)
+2. Instead of stopping, it retries. And retries. And retries.
+3. Every retry is a paid API call.
+4. **You wake up to a $200 bill because a bot was looping on a broken endpoint all night.**
 
-**Empusa fixes this.**
+There's no kill switch. No circuit breaker. Nothing between your dumb script and your credit card.
 
----
-
-## 📸 Screenshots
-
-### Mission Control Dashboard
-<img src="./public/dashboard-preview.png" alt="Mission Control Dashboard" />
-
-*Real-time overview of all running agents with status indicators and intervention counts*
-
-### Time Travel Debugger
-<img src="./public/trace-view.png" alt="Time Travel Debugger" />
-
-*Step-by-step execution timeline with success/failure states and loop detection*
+**Empusa is that kill switch.**
 
 ---
 
-## ✨ Key Features
+## How It Works
 
-### 🕵️‍♂️ **Time Travel Debugging**
-Visualize execution traces as an interactive timeline. Green = Success, Red = Fail, Yellow = Loop Detected. No more grep-ing through logs.
+```
+Your Script  ──>  Empusa Proxy (localhost:3000)  ──>  OpenAI / Replicate / Any API
+                         │
+                         ├── Tracks every request per session
+                         ├── Detects repeated failures (3+ in 1 min)
+                         ├── BLOCKS the session automatically
+                         └── Returns 429 instead of forwarding
+                              (your script stops spending money)
+```
 
-### 🔄 **Adaptive Loop Detection**
-The system automatically identifies when an agent is stuck in a retry loop and shows exactly where intervention occurred. Watch the yellow pulse in action.
-
-### ⏯️ **Human-in-the-Loop Resume** *(Planned)*
-Pause bad runs, inspect the state, fix the issue, and resume without restarting from scratch. Save hours of debugging time.
-
-### ⚡ **Universal Compatibility**
-Built for OpenClaw logs but designed to work with any Agent Protocol (LangChain, AutoGPT, custom frameworks). Plug in your telemetry and go.
-
----
-
-## 🏗️ Origin Story
-
-This tool was born from fixing the **critical Infinite Loop bug in OpenClaw** (PR #9759). After watching agents burn through $200 in API credits overnight, we realized the ecosystem needed better observability.
-
-**We built this because we needed it.** Now we're open-sourcing it for the community.
+**Zero client cooperation required.** The proxy watches upstream responses on its own. Your script doesn't need to report errors — if the API keeps returning 500s, Empusa catches it and cuts the line.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# Clone the repository
 git clone https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI.git
 cd EmpusaAI
-
-# Install dependencies
 npm install
-
-# Run the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the dashboard.
+Dashboard is at [http://localhost:3000](http://localhost:3000).
 
-### Testing with Sample Data
+### Integration (2 lines of code)
 
-Run the test script to send sample logs to the dashboard:
+Replace your `fetch` calls to route through Empusa:
 
-```bash
-node scripts/test-ingest.js
+```javascript
+// Before — unprotected
+const res = await fetch('https://api.openai.com/v1/chat/completions', options);
+
+// After — protected by Empusa
+const res = await fetch('http://localhost:3000/api/proxy?target=https://api.openai.com/v1/chat/completions&session_id=my-bot', options);
 ```
 
-This will create a test session with 5 log entries including a loop detection. The script will output a URL to view the session.
+That's it. Your headers, body, and method are forwarded as-is. If the session gets blocked, you get a `429` back instead of the API burning your money.
 
-### Live Agent Simulation
-
-Watch a real-time agent simulation with dynamic state evolution:
+### See It In Action
 
 ```bash
-node scripts/simulation-agent.js
+# Start the server
+npm run dev
+
+# In another terminal — run the demo bot
+node scripts/e2e-live-demo.js
 ```
 
-This runs a live "Flaky Browser Agent" that:
-- ✅ Navigates and clicks successfully
-- 🔄 Retries a failing action 3 times
-- 🚨 Detects the loop and halts automatically
-- 💾 Updates state in real-time (watch retries increment: 0 → 1 → 2 → 3)
-
-**Open the dashboard while it runs to see logs appear live!**
-
-### Time Travel Resume
-
-Test the resume capability:
-
-```bash
-# Copy the example resume file
-cp resume.example.json resume.json
-
-# Run the simulation - it will skip completed steps!
-node scripts/simulation-agent.js
-```
-
-The agent will:
-- ♻️ Load state from `resume.json`
-- ⏩ Skip Steps 1 & 2 (already completed)
-- 🔄 Resume from Step 3 onwards
-
-**This proves you can restore agent state and continue execution!**
+Watch the bot make real requests, hit real 500 errors, and get automatically blocked by the proxy — without ever calling `/api/error`. Open the dashboard to see the kill switch fire in real time.
 
 ---
 
-## 📡 API Reference
+## What You Get
 
-### POST `/api/logs`
+### Self-Aware Proxy
+The proxy doesn't just forward requests. It **watches upstream responses**. If a session gets 3+ HTTP errors within 1 minute, it auto-blocks — no client cooperation needed. Your dumb bot doesn't need to be smart enough to report its own errors.
 
-Ingest agent execution logs in real-time.
+### Money Saved Dashboard
+Configure cost per API domain (OpenAI = $0.03/req, Replicate = $0.05/req, etc). The dashboard shows exactly how much money Empusa saved you in the last 24 hours in dollars, not just request counts.
 
-**Request Body:**
-```json
-{
-  "sessionId": "session-123",
-  "step": 1,
-  "action": "Click(Login)",
-  "status": "success",
-  "error": "Optional error message",
-  "timestamp": "2026-02-06T10:42:01.000Z"
-}
-```
+### Auto-Recovery
+Blocked sessions auto-unblock after a configurable cooldown (default: 5 minutes). The dashboard shows a live countdown. If the underlying issue is fixed, the bot resumes automatically. No manual intervention needed at 2 AM.
 
-**Status Values:**
-- `success` - Step completed successfully
-- `failure` - Step failed with error
-- `loop_detected` - System detected infinite loop
+### Webhook Alerts
+Get a Slack or Discord message the instant a session gets blocked. Configure webhooks in the dashboard settings. Never find out about a broken bot hours after the fact.
 
-**Response:**
-```json
-{
-  "success": true,
-  "id": 1
-}
-```
-
-### GET `/api/logs?sessionId={id}`
-
-Retrieve all logs for a specific session.
-
-**Response:**
-```json
-{
-  "logs": [
-    {
-      "id": 1,
-      "session_id": "session-123",
-      "step": 1,
-      "action": "Click(Login)",
-      "status": "success",
-      "timestamp": "2026-02-06T10:42:01.000Z"
-    }
-  ]
-}
-```
+### Live Event Log
+Real-time feed of every error (red) and every blocked request (yellow). See exactly what went wrong, which session, and when.
 
 ---
 
-## 🛠️ Tech Stack
+## API Reference
 
-<div align="center">
+### `GET/POST/PUT/DELETE /api/proxy`
+
+The universal proxy. Forwards any request to the target API.
+
+| Parameter | Location | Description |
+|-----------|----------|-------------|
+| `target` | Query param or `x-target-url` header | The actual API URL to call |
+| `session_id` | Query param or `x-session-id` header | Groups requests for loop detection |
+
+**If the session is ACTIVE:** Forwards the request, returns the upstream response.
+**If the session is BLOCKED:** Returns `429 Too Many Requests`. No external call is made.
+
+### `POST /api/error`
+
+Optional error ingestion endpoint. Use this if your script can report its own errors (in addition to the proxy's auto-detection).
+
+```json
+{
+  "session_id": "my-bot",
+  "error_message": "Element not found: #login-button",
+  "timestamp": "2026-02-09T10:00:00.000Z"
+}
+```
+
+### `POST /api/sessions/unblock`
+
+Manually unblock a session.
+
+```json
+{ "session_id": "my-bot" }
+```
+
+### `GET /api/dashboard`
+
+Returns all dashboard data: blocked counts, money saved, active loops, recent events.
+
+### `GET/POST /api/webhooks`
+
+Manage Slack/Discord webhook URLs for block notifications.
+
+### `GET/POST /api/cost-config`
+
+Configure per-domain cost estimation (e.g., `api.openai.com` = $0.03/request).
+
+---
+
+## Tech Stack
 
 | Technology | Purpose |
-|------------|---------|
-| **Next.js 14** | React framework with App Router |
-| **TypeScript** | Type-safe development |
-| **Tailwind CSS** | Utility-first styling |
-| **Lucide Icons** | Beautiful, consistent iconography |
+|-----------|---------|
+| **Next.js 16** | App Router + API routes |
+| **SQLite** | Zero-config local database (better-sqlite3) |
+| **TypeScript** | Type safety |
+| **Tailwind CSS** | Dashboard styling |
 
-</div>
-
----
-
-## 📋 Roadmap
-
-- [x] Real-time agent status dashboard
-- [x] Execution timeline visualization
-- [x] Loop detection system
-- [ ] Live log streaming
-- [ ] State inspection & editing
-- [ ] Resume from checkpoint
-- [ ] Multi-agent orchestration view
-- [ ] Cost tracking & alerts
+No external databases. No Docker. No cloud dependencies. One `npm install` and you're running.
 
 ---
 
-## 🤝 Contributing
+## Roadmap
 
-We welcome contributions! Whether it's:
+**Shipped:**
+- [x] Universal API proxy with session-based blocking
+- [x] Self-aware failure detection (no client cooperation needed)
+- [x] Loop detection (3+ identical errors in 1 minute)
+- [x] Auto-recovery with configurable cooldown
+- [x] Cost estimation per API domain
+- [x] Money Saved dashboard metric
+- [x] Webhook alerts (Slack + Discord)
+- [x] Live event log with error + block feed
+- [x] Manual unblock from dashboard
+- [x] Settings panel for webhooks + cost config
 
-- 🐛 Bug reports
-- 💡 Feature requests
-- 📖 Documentation improvements
-- 🔧 Code contributions
-
-Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
-
----
-
-## 📄 License
-
-```
-MIT License
-
-Copyright (c) 2026 EmpusaAI
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-See [LICENSE](LICENSE) file for full details.
+**Next:**
+- [ ] Auto-fix: LLM analyzes the error and suggests/applies a fix before resuming
+- [ ] Save points: checkpoint script state and resume from last good step
+- [ ] Semantic log analysis: cluster similar errors across sessions
+- [ ] Multi-node: proxy multiple machines from one dashboard
+- [ ] Budget caps: hard limit per session/day, not just loop detection
+- [ ] npm package: `npx empusa` to start, no clone needed
 
 ---
 
-## 🙏 Acknowledgments
+## License
 
-Built by developers who got tired of debugging agents in production. Special thanks to the OpenClaw community for inspiration and feedback.
+MIT. See [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
-  
-  **⭐ If this saves you from one 2 AM debugging session, give us a star!**
-  
-  [Report Bug](https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI/issues) · [Request Feature](https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI/issues) · [Documentation](https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI/wiki)
-  
+
+**If your bots have ever burned money while you slept, star this repo.**
+
+[Report Bug](https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI/issues) · [Request Feature](https://github.com/justin55afdfdsf5ds45f4ds5f45ds4/EmpusaAI/issues)
+
 </div>
