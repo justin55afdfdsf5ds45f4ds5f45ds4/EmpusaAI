@@ -103,7 +103,7 @@ export function buildRemedyHistory(logs: any[]): {
     .map(log => ({
       step: log.step,
       remedy: log.remedy_attempted,
-      outcome: log.status === 'success' ? 'success' : 'failure',
+      outcome: (log.status === 'success' ? 'success' : 'failure') as 'success' | 'failure',
       errorCode: log.error_code
     }));
   

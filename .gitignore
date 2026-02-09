@@ -47,3 +47,12 @@ empusa.db-wal
 
 # resume state (local testing)
 resume.json
+
+# internal docs / clutter
+mustread.md
+API.md
+REMEDY_CHAIN.md
+RESUME_GUIDE.md
+SIMULATION.md
+TIME_TRAVEL.md
+resume.example.json
