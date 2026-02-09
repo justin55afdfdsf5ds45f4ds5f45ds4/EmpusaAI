@@ -20,7 +20,7 @@ let currentStep = 0;
 let resumeMode = false;
 
 // Helper: Log to Empusa with current state
-async function logToEmpusa(action, status, error = null) {
+async function logToEmpusa(action, status, error = null, errorCode = null, remedyAttempted = null) {
   currentStep++;
   
   const payload = {
@@ -29,6 +29,8 @@ async function logToEmpusa(action, status, error = null) {
     action,
     status,
     error,
+    errorCode,
+    remedyAttempted,
     timestamp: new Date().toISOString(),
     state: JSON.parse(JSON.stringify(state)) // Deep clone current state
   };
@@ -138,6 +140,13 @@ async function main() {
   console.log('⏳ Step 4+: Attempting to submit form...');
   console.log('   💥 Simulating flaky element...\n');
   
+  // Define remedy sequence
+  const remedies = [
+    { name: 'standard_retry', errorCode: '500' },
+    { name: 'retry_with_backoff', errorCode: '500' },
+    { name: 'change_selector', errorCode: '404' }
+  ];
+  
   // Enter the retry loop
   while (true) {
     state.retries++;
@@ -146,27 +155,38 @@ async function main() {
     state.memory.element = 'Submit';
     state.memory.retryCount = state.retries;
     
+    // Get current remedy
+    const remedyIndex = Math.min(state.retries - 1, remedies.length - 1);
+    const currentRemedy = remedies[remedyIndex];
+    
     // Simulate failure for first 3 attempts
     if (state.retries < 3) {
-      console.log(`   🔄 Retry ${state.retries}/3: Element not interactive...`);
+      console.log(`   🔄 Retry ${state.retries}/3: Element not interactive (${currentRemedy.errorCode})...`);
+      console.log(`   🔧 Attempting remedy: ${currentRemedy.name}`);
       state.memory.error = 'Element not interactive';
+      state.memory.errorCode = currentRemedy.errorCode;
       await logToEmpusa(
         'Click("Submit")',
         'failure',
-        'Element not interactive'
+        'Element not interactive',
+        currentRemedy.errorCode,
+        currentRemedy.name
       );
       await wait(1500); // Slightly longer wait to show retry delay
     } else {
       // Loop detected! Agent realizes it's stuck
       console.log(`   🚨 LOOP DETECTED! Agent is stuck after ${state.retries} retries`);
+      console.log(`   📊 Remedy chain exhausted: ${remedies.map(r => r.name).join(' → ')}`);
       state.memory.lastAction = 'loop_detected';
       state.memory.loopCount = state.retries;
-      state.memory.suggestion = 'Try alternative selector or wait for element to be interactive';
+      state.memory.suggestion = 'All remedies failed - manual intervention required';
       
       await logToEmpusa(
         'Click("Submit")',
         'loop_detected',
-        'SYSTEM INTERVENTION: Loop Blocked - Element repeatedly not interactive'
+        'SYSTEM INTERVENTION: Loop Blocked - All remedies exhausted',
+        '500',
+        'manual_intervention_required'
       );
       
       console.log('\n🛑 Agent halted. Intervention required.');

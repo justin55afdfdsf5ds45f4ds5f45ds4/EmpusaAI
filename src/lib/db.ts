@@ -17,15 +17,29 @@ export function getDatabase() {
         action TEXT NOT NULL,
         status TEXT NOT NULL,
         error TEXT,
+        error_code TEXT,
+        remedy_attempted TEXT,
         timestamp TEXT NOT NULL,
         state_snapshot TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
-    // Add state_snapshot column if it doesn't exist (for existing databases)
+    // Add new columns if they don't exist (for existing databases)
     try {
       db.exec(`ALTER TABLE logs ADD COLUMN state_snapshot TEXT`);
+    } catch (e) {
+      // Column already exists, ignore error
+    }
+    
+    try {
+      db.exec(`ALTER TABLE logs ADD COLUMN error_code TEXT`);
+    } catch (e) {
+      // Column already exists, ignore error
+    }
+    
+    try {
+      db.exec(`ALTER TABLE logs ADD COLUMN remedy_attempted TEXT`);
     } catch (e) {
       // Column already exists, ignore error
     }
@@ -46,6 +60,8 @@ export interface LogEntry {
   action: string;
   status: 'success' | 'failure' | 'loop_detected';
   error?: string;
+  error_code?: string;
+  remedy_attempted?: string;
   timestamp: string;
   state_snapshot?: string;
   created_at: string;
@@ -58,12 +74,14 @@ export function insertLog(
   status: string,
   error?: string,
   timestamp?: string,
-  stateSnapshot?: any
+  stateSnapshot?: any,
+  errorCode?: string,
+  remedyAttempted?: string
 ) {
   const db = getDatabase();
   const stmt = db.prepare(`
-    INSERT INTO logs (session_id, step, action, status, error, timestamp, state_snapshot)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO logs (session_id, step, action, status, error, timestamp, state_snapshot, error_code, remedy_attempted)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   
   const result = stmt.run(
@@ -73,7 +91,9 @@ export function insertLog(
     status,
     error || null,
     timestamp || new Date().toISOString(),
-    stateSnapshot ? JSON.stringify(stateSnapshot) : null
+    stateSnapshot ? JSON.stringify(stateSnapshot) : null,
+    errorCode || null,
+    remedyAttempted || null
   );
   
   return result.lastInsertRowid;

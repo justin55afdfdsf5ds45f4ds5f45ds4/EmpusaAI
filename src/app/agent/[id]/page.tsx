@@ -9,6 +9,8 @@ interface Checkpoint {
   action: string;
   status: 'success' | 'failure' | 'loop_detected';
   error?: string;
+  errorCode?: string;
+  remedyAttempted?: string;
   timestamp: string;
   state?: any;
 }
@@ -32,6 +34,8 @@ export default function AgentDetail() {
             action: log.action,
             status: log.status,
             error: log.error,
+            errorCode: log.error_code,
+            remedyAttempted: log.remedy_attempted,
             timestamp: new Date(log.timestamp).toLocaleTimeString('en-US', { 
               hour12: false,
               hour: '2-digit',
@@ -59,6 +63,23 @@ export default function AgentDetail() {
   }, [params?.id]);
   
   const hasLoopDetected = checkpoints.some(cp => cp.status === 'loop_detected');
+  
+  // Build remedy chain for display
+  const buildRemedyChain = () => {
+    const failedAttempts = checkpoints.filter(cp => 
+      (cp.status === 'failure' || cp.status === 'loop_detected') && cp.remedyAttempted
+    );
+    
+    return failedAttempts.map((attempt, idx) => ({
+      attemptNumber: idx + 1,
+      remedy: attempt.remedyAttempted,
+      outcome: attempt.status === 'loop_detected' ? 'Loop Detected' : 'Failed',
+      errorCode: attempt.errorCode,
+      step: attempt.step
+    }));
+  };
+  
+  const remedyChain = buildRemedyChain();
   
   const copyStateToClipboard = async (state: any, step: number) => {
     try {
@@ -138,8 +159,20 @@ export default function AgentDetail() {
               }`}>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-mono text-sm text-blue-300 font-bold">{cp.action}</h3>
-                  <span className="text-xs uppercase tracking-wider font-bold text-neutral-600">Step {cp.step}</span>
+                  <div className="flex items-center gap-2">
+                    {cp.errorCode && (
+                      <span className="text-xs bg-red-900/30 text-red-300 px-2 py-0.5 rounded font-mono">
+                        {cp.errorCode}
+                      </span>
+                    )}
+                    <span className="text-xs uppercase tracking-wider font-bold text-neutral-600">Step {cp.step}</span>
+                  </div>
                 </div>
+                {cp.remedyAttempted && (
+                  <div className="mb-2 text-xs bg-blue-900/20 text-blue-300 px-2 py-1 rounded border border-blue-800/30">
+                    🔧 Remedy: <span className="font-mono">{cp.remedyAttempted}</span>
+                  </div>
+                )}
                 {cp.status !== 'success' && (
                   <div className="mt-3 bg-black/50 p-3 rounded border border-white/5 flex items-start gap-3">
                     {cp.status === 'loop_detected' ? <Shield size={16} className="text-yellow-400 shrink-0 mt-0.5" /> : <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />}
